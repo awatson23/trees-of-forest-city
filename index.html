@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Trees of Forest City</title>
+    <script type='text/javascript' src='https://d3js.org/d3.v4.min.js'></script>
+    <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@100;300;400;500;600;700&display=swap" rel="stylesheet"> 
+  </head>
+    <body>
+      <div id="vizCon">
+        <div id="info"><img src="london-logo.JPG"><h1>Trees of Forest City</h1>
+          <h2>Discover over 85 London Ontario tree species and their population</h2>
+          <p>Scroll to discover new species along the population scale.
+            Hover over a tree to discover its species.
+          </p>
+          <p><a href="https://opendata.london.ca/datasets/005a0ce264154ff884c34eaf5472cd90_0">Source: Open data London</a>
+          </p>
+
+          </div>
+        <div id="viz"><div id="grassplot"></div></div>
+      </div>
+
+      <style>
+        body {
+          font-family: 'Raleway', sans-serif;
+        }
+
+        a {
+          text-decoration: none;
+          color:green;
+        }
+
+        #vizCon {
+          display:flex;
+          flex-direction: row;
+          width: 60%;
+          margin: 0 auto;
+          padding-top: 5%;
+        }
+
+        #info {
+          text-align: center;
+          width: 30%;
+          position: fixed;
+          height: 60vh;
+        }
+
+        img {
+          width: 20%;
+        }
+
+        #info h1 {
+          font-size: 40px;
+        }
+
+        #viz {
+        
+          width: 20%;
+          margin-left: 60%;
+        }
+
+        p.tooltip {
+          font-weight: bold;
+          width: 30%;
+          padding: 2%;
+          background: orange;
+          margin: 0 auto;
+        }
+
+      </style>
+      <script type="text/javascript">
+
+      //Draw the initial container
+      	var svg = d3.select("#viz")
+		      .append("svg")
+        	.attr("height", 12100)
+
+        /* here is where i stored the tree svg*/
+        var paths = [{
+          fill: "rgba(102,140,77,.9)",
+          stroke: "darkgreen",
+          d: "M50,18A30,30,0,0,0,20,48v2A16,16,0,0,0,36,66H46V82h8V66H64A16,16,0,0,0,80,50V48A30,30,0,0,0,50,18ZM72,50a8,8,0,0,1-8,8H54a8,8,0,0,1,8-8h4V42H62a15.88,15.88,0,0,0-8,2.16V34H46V44.16A15.88,15.88,0,0,0,38,42H34v8h4a8,8,0,0,1,8,8H36a8,8,0,0,1-8-8V48a22,22,0,0,1,44,0Z"}
+					];
+
+
+
+
+
+d3.csv('forest-city-tree-types.csv')
+      .row(function(d){return {tree_name: d.tree_name, count: Number(d.count)}}) 
+      .get(function(error, rows) {
+      
+        /*console.log(rows)*/
+
+        /*here i am isolating tree names and count from the rows object and putting them into their own
+          object to easily access them*/
+
+        let tree_name = []
+        
+        for (i = 0; i < rows.length; i ++) {
+          tree_name.push(rows[i].tree_name) 
+        }
+
+        console.log(tree_name)
+
+        let count = []
+        
+        for (i = 0; i < rows.length; i ++) {
+          count.push(rows[i].count) 
+        }
+        
+        /*making the tooltip*/
+
+        var tt = d3.select('#info').append('p')
+                      .attr('class','tooltip')
+                      .style('opacity', 0);
+
+                      
+       
+
+          var yscale = d3.scaleLog()
+            .domain([d3.min(count), d3.max(count)]) 
+            .range([12000, 0])
+        
+
+            var trees = svg.selectAll(".tree")
+            .data(count)
+            .enter()
+            .append('path')
+            .attr('class', '.leaf')
+            .attr('d', paths[0].d)
+            .style('stroke', paths[0].stroke)
+            .style('fill', paths[0].fill)
+            .attr('transform', function(d) {
+            return 'translate(100,'+yscale(d+6)+')'
+            })
+            //switch data to tree name for mouseover
+            .data(tree_name)
+            .on('mouseover', function(d){
+              tt.transition()
+              .duration(200)
+              .style('opacity', 0.9);
+              tt.html('Tree name: ' + d)
+            })
+
+            
+            var yaxis = d3.axisLeft(yscale)
+            .scale(yscale)
+            .ticks(30)
+            /*source code for formatting of logarithmic notation 
+            https://stackoverflow.com/questions/16211095/how-can-i-get-numeric-values-instead-of-logarthmic-values-in-d3-axis-scale */
+            .tickFormat(function (d) {
+              return yscale.tickFormat(100,d3.format(",d"))(d)
+            })
+            
+
+            svg.append('g')
+            .attr('transform', 'translate(100, 0)')
+            .call(yaxis)
+
+            
+            })    
+      
+      
+
+        </script>
+    </body>
+</html>
